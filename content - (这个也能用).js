@@ -12,6 +12,7 @@
   let settings = { ...DEFAULT_SETTINGS };
   const HIDDEN_ATTR = "data-fkh-hidden";
   const PREVIEW_HIDDEN_ATTR = "data-fkh-preview-hidden";
+  // 新增：用于给命中白名单的父级容器打上“免死金牌”标记
   const WHITELIST_MATCH_ATTR = "data-fkh-whitelist-match"; 
   const ROW_SELECTOR = "tbody, tr, li, article, .thread, .topic, [class*='thread' i], [class*='post' i]";
   
@@ -36,7 +37,6 @@
     return content.toLowerCase().includes(rule.matcher);
   }
 
-  // ============== 帖子过滤模块 ==============
   function scan() {
     const url = window.location.href;
     const isBlacklisted = settings.blacklistUrls?.split("\n").some(p => p.trim() && url.includes(p.trim()));
@@ -48,53 +48,44 @@
     const isWhitelistMode = settings.filterMode === "show";
 
     document.querySelectorAll(ROW_SELECTOR).forEach(el => {
-      // 加装隔离：即使单个元素判定报错，也不会阻断整个插件
-      try {
-        if (!isWhitelistMode && el.hasAttribute(HIDDEN_ATTR)) return;
+      // 避免重复扫描已经加上隐藏标记的元素（黑名单模式下）
+      if (!isWhitelistMode && el.hasAttribute(HIDDEN_ATTR)) return;
 
-        const textContent = el.innerText || "";
-        const htmlContent = el.outerHTML || "";
+      const textContent = el.innerText || "";
+      const htmlContent = el.outerHTML || "";
 
-        let isMatch = rules.some(rule => {
-          return rule.target === "text" ? checkMatch(textContent, rule) : checkMatch(htmlContent, rule);
-        });
+      let isMatch = rules.some(rule => {
+        return rule.target === "text" ? checkMatch(textContent, rule) : checkMatch(htmlContent, rule);
+      });
 
-        // 更安全的节点寻找方式
-        let target = el;
-        if (el.tagName === "TR") {
-          const tbody = el.closest("tbody");
-          if (tbody && tbody.children && tbody.children.length <= 3) {
-            target = tbody;
-          }
+      const target = (el.tagName === "TR" && el.closest("tbody")?.children.length <= 3) ? el.closest("tbody") : el;
+
+      if (isWhitelistMode) {
+        // 【关键修复】如果自身的父级/祖先已经被白名单命中保留，那么子元素也继承保留状态
+        if (!isMatch && target.closest(`[${WHITELIST_MATCH_ATTR}]`)) {
+          isMatch = true;
         }
 
-        if (isWhitelistMode) {
-          if (!isMatch && target.closest && target.closest(`[${WHITELIST_MATCH_ATTR}]`)) {
-            isMatch = true;
-          }
-
-          if (!isMatch) {
-            target.setAttribute(HIDDEN_ATTR, "1");
-            target.style.setProperty("display", "none", "important");
-            target.removeAttribute(WHITELIST_MATCH_ATTR);
-          } else {
-            target.removeAttribute(HIDDEN_ATTR);
-            target.style.display = "";
-            target.setAttribute(WHITELIST_MATCH_ATTR, "1");
-          }
+        if (!isMatch) {
+          target.setAttribute(HIDDEN_ATTR, "1");
+          target.style.setProperty("display", "none", "important");
+          target.removeAttribute(WHITELIST_MATCH_ATTR); // 清除可能残留的标记
         } else {
-          if (isMatch) {
-            target.setAttribute(HIDDEN_ATTR, "1");
-            target.style.setProperty("display", "none", "important");
-          }
+          target.removeAttribute(HIDDEN_ATTR);
+          target.style.display = "";
+          target.setAttribute(WHITELIST_MATCH_ATTR, "1"); // 给命中的容器打上保留标记，庇护它的子元素
         }
-      } catch (err) {
-        // 静默处理，保障后续流程
+      } else {
+        // 黑名单模式：命中规则，则隐藏
+        if (isMatch) {
+          target.setAttribute(HIDDEN_ATTR, "1");
+          target.style.setProperty("display", "none", "important");
+        }
       }
     });
   }
 
-  // ============== 图片悬停拦截模块 (100% 还原 V2 逻辑) ==============
+  // ============== 图片悬停拦截模块 ==============
   function isLikelyPreviewOverlay(el) {
     if (!el || el.nodeType !== 1 || el.hasAttribute(PREVIEW_HIDDEN_ATTR)) return false;
     const cs = window.getComputedStyle(el);
@@ -110,31 +101,22 @@
   function hidePreviewOverlays() {
     if (!settings.disableImagePreview || Date.now() - lastImageHoverAt > 2500) return;
     document.querySelectorAll("body > div, body > section").forEach(el => {
-      try {
-        if (isLikelyPreviewOverlay(el)) {
-          el.setAttribute(PREVIEW_HIDDEN_ATTR, "1");
-          el.style.setProperty("display", "none", "important");
-        }
-      } catch (e) {}
+      if (isLikelyPreviewOverlay(el)) {
+        el.setAttribute(PREVIEW_HIDDEN_ATTR, "1");
+        el.style.setProperty("display", "none", "important");
+      }
     });
   }
 
   function handleImageHover(e) {
     if (!settings.disableImagePreview) return;
-    try {
-      const target = e.target;
-      if (!target || target.nodeType !== 1) return; // 确保是 DOM 元素
-
-      const isImg = target.tagName === "IMG" || 
-                  (target.closest && target.closest("a")?.querySelector("img")) || 
-                  (target.style && target.style.backgroundImage);
-                  
-      if (isImg) {
-        lastImageHoverAt = Date.now();
-        e.stopImmediatePropagation();
-        setTimeout(hidePreviewOverlays, 50);
-      }
-    } catch (err) {}
+    const target = e.target;
+    const isImg = target.tagName === "IMG" || target.closest("a")?.querySelector("img") || target.style.backgroundImage;
+    if (isImg) {
+      lastImageHoverAt = Date.now();
+      e.stopImmediatePropagation();
+      setTimeout(hidePreviewOverlays, 50);
+    }
   }
 
   // ============== 初始化与监听 ==============
@@ -154,27 +136,26 @@
       settings = s;
       injectStyle();
       document.documentElement.classList.toggle("fkh-no-zoom", !!s.disableImagePreview);
-      try { scan(); } catch (e) {}
+      scan();
     });
   }
 
-  // 双重保险：过滤和图片拦截彼此隔离，谁也不影响谁
   const observer = new MutationObserver(() => {
-    try { scan(); } catch (e) {}
-    try { if (settings.disableImagePreview) hidePreviewOverlays(); } catch (e) {}
+    scan();
+    if (settings.disableImagePreview) hidePreviewOverlays();
   });
   observer.observe(document.documentElement, { childList: true, subtree: true });
-
+  
   ["mouseover", "mouseenter", "mousemove"].forEach(type => {
     document.addEventListener(type, handleImageHover, true);
   });
 
   chrome.storage.onChanged.addListener(() => {
-    document.querySelectorAll(`[${HIDDEN_ATTR}], [${WHITELIST_MATCH_ATTR}], [${PREVIEW_HIDDEN_ATTR}]`).forEach(el => { 
+    // 设置更改时，同时清理隐藏属性和白名单保留标记
+    document.querySelectorAll(`[${HIDDEN_ATTR}], [${WHITELIST_MATCH_ATTR}]`).forEach(el => { 
       el.style.display = ""; 
       el.removeAttribute(HIDDEN_ATTR); 
       el.removeAttribute(WHITELIST_MATCH_ATTR);
-      el.removeAttribute(PREVIEW_HIDDEN_ATTR);
     });
     init();
   });
