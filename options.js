@@ -2,7 +2,8 @@
   "use strict";
   const DEFAULT_SETTINGS = {
     enabled: true,
-    disableImagePreview: false, // 默认关闭
+    filterMode: "hide", // 默认黑名单模式
+    disableImagePreview: false,
     keywordItems: [{ text: "topicrow", enabled: true, target: "html", type: "normal" }],
     blacklistUrls: "viewthread\nthread-\nread.php?tid="
   };
@@ -13,7 +14,8 @@
     template: $("keywordRowTemplate"),
     blacklistUrls: $("blacklistUrls"),
     enabled: $("enabled"),
-    disableImagePreview: $("disableImagePreview")
+    disableImagePreview: $("disableImagePreview"),
+    filterModes: document.querySelectorAll('input[name="filterMode"]')
   };
 
   function createRow(item) {
@@ -44,8 +46,11 @@
       enabled: r.querySelector(".keyword-enabled").checked
     })).filter(i => i.text);
 
+    const activeMode = document.querySelector('input[name="filterMode"]:checked').value;
+
     chrome.storage.sync.set({
       enabled: els.enabled.checked,
+      filterMode: activeMode,
       disableImagePreview: els.disableImagePreview.checked,
       keywordItems: items,
       blacklistUrls: els.blacklistUrls.value
@@ -57,6 +62,10 @@
       els.enabled.checked = !!s.enabled;
       els.disableImagePreview.checked = !!s.disableImagePreview;
       els.blacklistUrls.value = s.blacklistUrls;
+      
+      const mode = s.filterMode || "hide";
+      document.querySelector(`input[name="filterMode"][value="${mode}"]`).checked = true;
+
       els.keywordList.innerHTML = "";
       s.keywordItems.forEach(createRow);
     });
@@ -66,5 +75,7 @@
   els.enabled.onchange = saveSettings;
   els.disableImagePreview.onchange = saveSettings;
   els.blacklistUrls.oninput = saveSettings;
+  els.filterModes.forEach(radio => radio.addEventListener("change", saveSettings));
+  
   load();
 })();
