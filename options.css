@@ -1,0 +1,141 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  width: 390px;
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+  color: #222;
+  background: #f7f7f7;
+}
+
+.wrap {
+  padding: 14px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 32px;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  margin: -14px -14px 12px;
+  padding: 12px 14px;
+  background: #f7f7f7;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.field {
+  display: block;
+  margin: 12px 0;
+}
+
+.field-head {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.keyword-list {
+  display: grid;
+  gap: 7px;
+}
+
+.keyword-row {
+  display: grid;
+  grid-template-columns: 22px 1fr 30px;
+  align-items: center;
+  gap: 7px;
+}
+
+.keyword-enabled {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+.keyword-text {
+  width: 100%;
+  min-width: 0;
+  padding: 7px 8px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.35;
+  background: #fff;
+}
+
+.keyword-delete {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 8px;
+  font-size: 18px;
+  line-height: 30px;
+}
+
+.help {
+  margin: 7px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #666;
+}
+
+.check {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 10px 0;
+  line-height: 1.35;
+}
+
+.check input {
+  margin-top: 2px;
+}
+
+button {
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: #111;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+button.secondary {
+  padding: 6px 10px;
+  background: #fff;
+  color: #111;
+  border: 1px solid #ccc;
+  font-size: 12px;
+}
+
+
+button:hover {
+  background: #333;
+}
+
+button.secondary:hover {
+  background: #eee;
+}
+
+.status {
+  min-height: 18px;
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #167c2f;
+  white-space: pre-wrap;
+}
+
+.status.error {
+  color: #b00020;
+}

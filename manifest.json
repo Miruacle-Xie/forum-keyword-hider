@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Forum Keyword Hider",
+  "version": "2.3.0",
+  "description": "Hide forum topics by keywords or regular expressions with per-keyword instant toggles, and optionally disable generic image hover previews.",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_title": "Forum Keyword Hider",
+    "default_popup": "options.html"
+  },
+  "options_page": "options.html",
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_start"
+    }
+  ]
+}

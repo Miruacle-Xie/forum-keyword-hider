@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>Forum Keyword Hider Pro</title>
+  <link rel="stylesheet" href="options.css">
+  <style>
+    .keyword-row { grid-template-columns: 22px 1fr 80px 80px 30px !important; }
+    select { padding: 4px; border-radius: 4px; border: 1px solid #ccc; font-size: 12px; background: #fff; }
+    .footer-settings { margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="topbar"><h1>论坛关键词过滤</h1></header>
+
+    <label class="check">
+      <input id="enabled" type="checkbox"> <span>启用插件</span>
+    </label>
+
+    <section class="field">
+      <div class="field-head">
+        <span>过滤规则管理</span>
+        <button id="addKeyword" class="secondary" type="button" style="margin-left: auto;">添加规则</button>
+      </div>
+      <div class="keyword-list" id="keywordList"></div>
+      <p class="help">匹配代码时可针对 class 或 id 编写正则。示例：<code>topicrow</code> 或 <code>id="stick.*"</code></p>
+    </section>
+
+    <div class="footer-settings">
+      <label class="check">
+        <input id="disableImagePreview" type="checkbox">
+        <span><b>恢复：</b>禁止图片悬停放大 (通用规则)</span>
+      </label>
+
+      <section class="field" style="margin-top:15px;">
+        <div class="field-head"><span>排除生效的网址片段 (每行一个)</span></div>
+        <textarea id="blacklistUrls" class="keyword-text" rows="2" placeholder="例如: thread-, viewthread"></textarea>
+      </section>
+    </div>
+
+    <p id="status" class="status"></p>
+  </main>
+
+  <template id="keywordRowTemplate">
+    <div class="keyword-row">
+      <input class="keyword-enabled" type="checkbox">
+      <input class="keyword-text" type="text">
+      <select class="keyword-target">
+        <option value="text">匹配文本</option>
+        <option value="html">匹配代码</option>
+      </select>
+      <select class="keyword-type">
+        <option value="normal">普通</option>
+        <option value="regex">正则</option>
+      </select>
+      <button class="keyword-delete">×</button>
+    </div>
+  </template>
+  <script src="options.js"></script>
+</body>
+</html>
