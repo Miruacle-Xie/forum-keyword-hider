@@ -10,6 +10,8 @@
     .footer-settings { margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; }
     .mode-radio { display: inline-flex; align-items: center; margin-right: 20px; gap: 4px; cursor: pointer; }
     .mode-radio input { margin: 0; }
+    /* 全选框的样式微调 */
+    .field-head-title { display: flex; align-items: center; gap: 8px; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -20,7 +22,6 @@
       <input id="enabled" type="checkbox"> <span>启用插件</span>
     </label>
 
-    <!-- 新增：全局模式切换 -->
     <section class="field" style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
       <div class="field-head"><span>过滤模式 (全局)</span></div>
       <label class="mode-radio">
@@ -35,7 +36,11 @@
 
     <section class="field">
       <div class="field-head">
-        <span>过滤规则管理</span>
+        <!-- 在这里加入了全选框 -->
+        <div class="field-head-title">
+          <input id="selectAllRules" type="checkbox" title="全选 / 全不选" style="cursor: pointer; margin: 0;">
+          <span>过滤规则管理</span>
+        </div>
         <button id="addKeyword" class="secondary" type="button" style="margin-left: auto;">添加规则</button>
       </div>
       <div class="keyword-list" id="keywordList"></div>
@@ -59,8 +64,8 @@
 
   <template id="keywordRowTemplate">
     <div class="keyword-row">
-      <input class="keyword-enabled" type="checkbox">
-      <input class="keyword-text" type="text">
+      <input class="keyword-enabled" type="checkbox" title="启用/停用此规则">
+      <input class="keyword-text" type="text" placeholder="输入关键词...">
       <select class="keyword-target">
         <option value="text">匹配文本</option>
         <option value="html">匹配代码</option>
@@ -69,7 +74,7 @@
         <option value="normal">普通</option>
         <option value="regex">正则</option>
       </select>
-      <button class="keyword-delete">×</button>
+      <button class="keyword-delete" title="删除规则">×</button>
     </div>
   </template>
   <script src="options.js"></script>
