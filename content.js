@@ -37,6 +37,27 @@
   }
 
   // ============== 帖子过滤模块 ==============
+  // 表格中的 tbody/tr 如果直接 display:none，会让 table-layout:auto 重新计算列宽，
+  // 造成剩余帖子整体向右偏移。对表格行/行组使用 visibility:collapse，
+  // 可以移除对应行，同时尽量保留原来的列宽计算。
+  function hideFilterTarget(target) {
+    if (!target) return;
+
+    const isTablePart = target.tagName === "TBODY" || target.tagName === "TR";
+    target.setAttribute(HIDDEN_ATTR, isTablePart ? "collapse" : "hide");
+
+    // 清理旧版本可能留下的内联样式，具体隐藏方式交给 injectStyle 中的规则。
+    target.style.removeProperty("display");
+    target.style.removeProperty("visibility");
+  }
+
+  function showFilterTarget(target) {
+    if (!target) return;
+    target.removeAttribute(HIDDEN_ATTR);
+    target.style.removeProperty("display");
+    target.style.removeProperty("visibility");
+  }
+
   function scan() {
     const url = window.location.href;
     const isBlacklisted = settings.blacklistUrls?.split("\n").some(p => p.trim() && url.includes(p.trim()));
@@ -74,18 +95,15 @@
           }
 
           if (!isMatch) {
-            target.setAttribute(HIDDEN_ATTR, "1");
-            target.style.setProperty("display", "none", "important");
+            hideFilterTarget(target);
             target.removeAttribute(WHITELIST_MATCH_ATTR);
           } else {
-            target.removeAttribute(HIDDEN_ATTR);
-            target.style.display = "";
+            showFilterTarget(target);
             target.setAttribute(WHITELIST_MATCH_ATTR, "1");
           }
         } else {
           if (isMatch) {
-            target.setAttribute(HIDDEN_ATTR, "1");
-            target.style.setProperty("display", "none", "important");
+            hideFilterTarget(target);
           }
         }
       } catch (err) {
@@ -143,8 +161,19 @@
     const style = document.createElement("style");
     style.id = "fkh-style";
     style.textContent = `
-      [${HIDDEN_ATTR}] { display: none !important; }
-      .fkh-no-zoom img:hover { transform: none !important; scale: 1 !important; }
+      [${HIDDEN_ATTR}="hide"] {
+        display: none !important;
+      }
+
+      tbody[${HIDDEN_ATTR}="collapse"],
+      tr[${HIDDEN_ATTR}="collapse"] {
+        visibility: collapse !important;
+      }
+
+      .fkh-no-zoom img:hover {
+        transform: none !important;
+        scale: 1 !important;
+      }
     `;
     document.documentElement.appendChild(style);
   }
@@ -171,7 +200,8 @@
 
   chrome.storage.onChanged.addListener(() => {
     document.querySelectorAll(`[${HIDDEN_ATTR}], [${WHITELIST_MATCH_ATTR}], [${PREVIEW_HIDDEN_ATTR}]`).forEach(el => { 
-      el.style.display = ""; 
+      el.style.removeProperty("display");
+      el.style.removeProperty("visibility");
       el.removeAttribute(HIDDEN_ATTR); 
       el.removeAttribute(WHITELIST_MATCH_ATTR);
       el.removeAttribute(PREVIEW_HIDDEN_ATTR);
